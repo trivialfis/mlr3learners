@@ -9,8 +9,8 @@
 #' To compute on GPUs, you first need to compile \CRANpkg{xgboost} yourself and link
 #' against CUDA. See \url{https://xgboost.readthedocs.io/en/stable/build.html#building-with-gpu-support}.
 #'
-#' Note that using the `watchlist` parameter directly will lead to problems when wrapping this [mlr3::Learner] in a
-#' `mlr3pipelines` `GraphLearner` as the preprocessing steps will not be applied to the data in the watchlist.
+#' Note that using the `evals` parameter directly will lead to problems when wrapping this [mlr3::Learner] in a
+#' `mlr3pipelines` `GraphLearner` as the preprocessing steps will not be applied to the data in the evals.
 #' See the section *Early Stopping and Validation* on how to do this.
 #'
 #' @template note_xgboost
@@ -129,7 +129,7 @@ LearnerRegrXgboost = R6Class("LearnerRegrXgboost",
         tweedie_variance_power      = p_dbl(1, 2, default = 1.5, tags = "train", depends = quote(objective == "reg:tweedie")),
         updater                     = p_uty(tags = "train"), # Default depends on the selected booster
         verbose                     = p_int(0L, 2L, default = 1L, tags = "train"),
-        watchlist                   = p_uty(default = NULL, tags = "train"),
+        evals                   = p_uty(default = NULL, tags = "train"),
         xgb_model                   = p_uty(default = NULL, tags = "train")
       )
       # param deps
@@ -215,7 +215,7 @@ LearnerRegrXgboost = R6Class("LearnerRegrXgboost",
         xgboost::setinfo(xgb_data, "base_margin", data[[base_margin]])
       }
 
-      # the last element in the watchlist is used as the early stopping set
+      # the last element in the evals is used as the early stopping set
       internal_valid_task = task$internal_valid_task
       if (!is.null(pv$early_stopping_rounds) && is.null(internal_valid_task)) {
         stopf("Learner (%s): Configure field 'validate' to enable early stopping.", self$id)
@@ -228,7 +228,7 @@ LearnerRegrXgboost = R6Class("LearnerRegrXgboost",
           xgboost::setinfo(xgb_test_data, "base_margin", test_data[[base_margin]])
         }
 
-        pv$watchlist = c(pv$watchlist, list(test = xgb_test_data))
+        pv$evals = c(pv$evals, list(test = xgb_test_data))
       }
 
       # set internal validation measure
